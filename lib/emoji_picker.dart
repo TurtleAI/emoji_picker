@@ -41,6 +41,110 @@ enum ButtonMode {
 /// The function returns the selected [Emoji] as well as the [Category] from which it originated
 typedef void OnEmojiSelected(Emoji emoji, Category category);
 
+List<List<T>> chunk<T>(List<T> list, int chunkSize) {
+  final List<List<T>> chunks = [];
+  final len = list.length;
+  for (var i = 0; i < list.length; i += chunkSize) {
+    int size = i + chunkSize;
+    chunks.add(list.sublist(i, size > len ? len : size));
+  }
+  return chunks;
+}
+
+class EmojiCollection {
+  Iterable<Emoji> emojis;
+
+  static List<Emoji> getForCategory(Category category) {
+    switch (category) {
+      case Category.SMILEYS:
+        return _toEmojis(emojiList.smileys, category);
+      default:
+        return [];
+    }
+  }
+
+  static List<Emoji> _toEmojis(
+      Map<String, String> emojiMap, Category category) {
+    return emojiMap.entries
+        .map((e) => Emoji(
+              name: e.key,
+              emoji: e.value,
+              category: category,
+            ))
+        .toList();
+  }
+}
+
+class EmojiPage extends StatelessWidget {
+  final List<Emoji> emojis;
+
+  EmojiPage({@required this.emojis});
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      children: [
+        for (final e in emojis)
+          EmojiButton(
+            emoji: e,
+            size: 55,
+          ),
+      ],
+    );
+  }
+}
+
+class EmojiButton extends StatelessWidget {
+  const EmojiButton({
+    @required this.emoji,
+    @required this.size,
+  });
+
+  final Emoji emoji;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.green,
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: Center(
+          child: Text(
+            emoji.emoji,
+            style: TextStyle(fontSize: 24),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class EmojiPageView extends StatelessWidget {
+  const EmojiPageView({
+    @required this.pages,
+    @required this.pageSize,
+    @required this.pageController,
+  });
+
+  final List<List<Emoji>> pages;
+  final int pageSize;
+  final PageController pageController;
+
+  @override
+  Widget build(Object context) {
+    return PageView.builder(
+      controller: pageController,
+      itemCount: pages.length,
+      itemBuilder: (context, position) {
+        final pageForPosition = pages[position];
+        return EmojiPage(emojis: pageForPosition);
+      },
+    );
+  }
+}
+
 /// The Emoji Keyboard widget
 ///
 /// This widget displays a grid of [Emoji] sorted by [Category] which the user can horizontally scroll through.
@@ -268,7 +372,13 @@ class Emoji {
   /// This is the string that should be displayed to view the emoji
   final String emoji;
 
-  Emoji({@required this.name, @required this.emoji});
+  final Category category;
+
+  Emoji({
+    @required this.name,
+    @required this.emoji,
+    this.category,
+  });
 
   @override
   String toString() {
