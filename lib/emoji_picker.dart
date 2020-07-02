@@ -155,32 +155,41 @@ class _EmojiPickerSheetState extends State<EmojiPickerSheet> {
   @override
   Widget build(BuildContext context) {
     final emojis = widget.dataSource.emojisForCategory(selectedCategory);
-    final pages = chunk(emojis, 21);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SizedBox(
-          height: 200,
-          child: EmojiPageView(
-            pageController: pageController,
-            onEmojiPressed: widget.onEmojiPressed,
-            pages: pages,
-            pageSize: 21,
-          ),
-        ),
-        HorizontalScrollPositionIndicator(position: pageScrollPosition),
-        SizedBox(height: 20),
-        CategoryTabBar(
-          categories: widget.dataSource.categories,
-          selectedCategory: selectedCategory,
-          onTabPressed: (c) {
-            setState(() {
-              selectedCategory = c;
-            });
-          },
-        ),
-      ],
+    final pageSize = 21;
+    final pages = chunk(emojis, pageSize);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        print(constraints);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              height: 200,
+              child: EmojiPageView(
+                pageController: pageController,
+                onEmojiPressed: widget.onEmojiPressed,
+                pages: pages,
+                pageSize: pageSize,
+              ),
+            ),
+            HorizontalScrollPositionIndicator(position: pageScrollPosition),
+            SizedBox(height: 1),
+            CategoryTabBar(
+              categories: widget.dataSource.categories,
+              selectedCategory: selectedCategory,
+              onTabPressed: (c) {
+                setState(() {
+                  selectedCategory = c;
+                  pageController.jumpToPage(0);
+                });
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -209,8 +218,8 @@ class HorizontalScrollPositionIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 10,
-      color: Colors.yellow,
+      height: 5,
+      color: Colors.black12,
       child: AnimatedBuilder(
         animation: position,
         builder: (context, _) {
@@ -224,7 +233,7 @@ class HorizontalScrollPositionIndicator extends StatelessWidget {
               child: Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.rectangle,
-                  color: Colors.blue.withOpacity(0.3),
+                  color: Colors.blue,
                 ),
               ),
             ),
@@ -246,17 +255,20 @@ class EmojiPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      children: [
-        for (final e in emojis)
-          EmojiButton(
-            emoji: e,
-            size: 55,
-            onPressed: () {
-              onEmojiPressed?.call(e);
-            },
-          ),
-      ],
+    return Container(
+      color: const Color.fromRGBO(242, 242, 242, 1),
+      child: Wrap(
+        children: [
+          for (final e in emojis)
+            EmojiButton(
+              emoji: e,
+              size: 55,
+              onPressed: () {
+                onEmojiPressed?.call(e);
+              },
+            ),
+        ],
+      ),
     );
   }
 }
@@ -279,7 +291,6 @@ class EmojiButton extends StatelessWidget {
       height: size,
       child: FlatButton(
         onPressed: onPressed,
-        color: Colors.green,
         child: Center(
           child: Text(
             emoji.emoji,
