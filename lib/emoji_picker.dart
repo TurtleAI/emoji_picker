@@ -3,67 +3,123 @@ library emoji_picker;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'emoji_lists.dart' as emojiList;
+import 'src/util.dart';
 
-List<List<T>> chunk<T>(List<T> list, int chunkSize) {
-  final List<List<T>> chunks = [];
-  final len = list.length;
-  for (var i = 0; i < list.length; i += chunkSize) {
-    int size = i + chunkSize;
-    chunks.add(list.sublist(i, size > len ? len : size));
-  }
-  return chunks;
-}
-
-/// A class to store data for each individual emoji
 class Emoji {
-  /// The name or description for this emoji
   final String name;
-
-  /// The unicode string for this emoji
-  ///
-  /// This is the string that should be displayed to view the emoji
-  final String emoji;
+  final String unicode;
 
   Emoji({
     @required this.name,
-    @required this.emoji,
+    @required this.unicode,
   });
 
   @override
   String toString() {
-    return "Name: " + name + ", Emoji: " + emoji;
+    return "$name, $unicode";
   }
 }
 
-class EmojiCategory {
+class EmojiPickerSheet extends StatefulWidget {
+  final EmojiDataSource dataSource;
+  final void Function(Emoji emoji) onEmojiPressed;
+
+  EmojiPickerSheet({
+    @required this.dataSource,
+    this.onEmojiPressed,
+  });
+
+  @override
+  State<StatefulWidget> createState() {
+    return _EmojiPickerSheetState();
+  }
+}
+
+class _EmojiPickerSheetState extends State<EmojiPickerSheet> {
+  final pageController = PageController();
+  final pageScrollPosition = ValueNotifier<ScrollPosition>(ScrollPosition());
+
+  Category selectedCategory;
+
+  @override
+  void initState() {
+    super.initState();
+
+    pageController.addListener(_onPageControllerScroll);
+    selectedCategory = widget.dataSource.categories[1];
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    pageController.removeListener(_onPageControllerScroll);
+  }
+
+  void _onPageControllerScroll() {
+    pageScrollPosition.value = scrollPositionForController(pageController);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final emojis = widget.dataSource.emojisForCategory(selectedCategory);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          flex: 1,
+          child: EmojiPageView(
+            pageController: pageController,
+            onEmojiPressed: widget.onEmojiPressed,
+            emojis: emojis,
+          ),
+        ),
+        HorizontalScrollPositionIndicator(position: pageScrollPosition),
+        SizedBox(height: 1),
+        CategoryTabBar(
+          categories: widget.dataSource.categories,
+          selectedCategory: selectedCategory,
+          onTabPressed: (c) {
+            setState(() {
+              selectedCategory = c;
+              pageController.jumpToPage(0);
+            });
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class Category {
   final IconData icon;
   final String name;
-  EmojiCategory({this.name, this.icon});
+  Category({this.name, this.icon});
 }
 
 abstract class EmojiDataSource {
-  List<EmojiCategory> get categories;
-  List<Emoji> emojisForCategory(EmojiCategory category);
+  List<Category> get categories;
+  List<Emoji> emojisForCategory(Category category);
 }
 
 class DefaultEmojiDataSource implements EmojiDataSource {
-  final _emojiCategories = <EmojiCategory>[
-    EmojiCategory(name: 'Recent', icon: Icons.search),
-    EmojiCategory(name: 'Faces', icon: Icons.tag_faces),
-    EmojiCategory(name: 'Animals', icon: Icons.pets),
-    EmojiCategory(name: 'Foods', icon: Icons.fastfood),
-    EmojiCategory(name: 'Travel', icon: Icons.location_city),
-    EmojiCategory(name: 'Activities', icon: Icons.directions_run),
-    EmojiCategory(name: 'Objects', icon: Icons.lightbulb_outline),
-    EmojiCategory(name: 'Symbols', icon: Icons.euro_symbol),
-    EmojiCategory(name: 'Flags', icon: Icons.flag),
+  final _emojiCategories = <Category>[
+    // Category(name: 'Recent', icon: Icons.search),
+    Category(name: 'Faces', icon: Icons.tag_faces),
+    Category(name: 'Animals', icon: Icons.pets),
+    Category(name: 'Foods', icon: Icons.fastfood),
+    Category(name: 'Travel', icon: Icons.location_city),
+    Category(name: 'Activities', icon: Icons.directions_run),
+    Category(name: 'Objects', icon: Icons.lightbulb_outline),
+    Category(name: 'Symbols', icon: Icons.euro_symbol),
+    Category(name: 'Flags', icon: Icons.flag),
   ];
 
   @override
-  List<EmojiCategory> get categories => _emojiCategories;
+  List<Category> get categories => _emojiCategories;
 
   @override
-  List<Emoji> emojisForCategory(EmojiCategory category) {
+  List<Emoji> emojisForCategory(Category category) {
     switch (category.name) {
       case 'Recent':
         return [];
@@ -92,90 +148,9 @@ class DefaultEmojiDataSource implements EmojiDataSource {
     return emojiMap.entries
         .map((e) => Emoji(
               name: e.key,
-              emoji: e.value,
+              unicode: e.value,
             ))
         .toList();
-  }
-}
-
-class EmojiPickerSheet extends StatefulWidget {
-  final EmojiDataSource dataSource;
-  final void Function(Emoji emoji) onEmojiPressed;
-
-  EmojiPickerSheet({
-    @required this.dataSource,
-    this.onEmojiPressed,
-  });
-
-  @override
-  State<StatefulWidget> createState() {
-    return _EmojiPickerSheetState();
-  }
-}
-
-class _EmojiPickerSheetState extends State<EmojiPickerSheet> {
-  final pageController = PageController();
-  final pageScrollPosition = ValueNotifier<ScrollPosition>(ScrollPosition());
-
-  EmojiCategory selectedCategory;
-
-  @override
-  void initState() {
-    super.initState();
-
-    pageController.addListener(_onPageControllerScroll);
-    selectedCategory = widget.dataSource.categories[1];
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    pageController.removeListener(_onPageControllerScroll);
-  }
-
-  void _onPageControllerScroll() {
-    pageScrollPosition.value = scrollPositionForController(pageController);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final emojis = widget.dataSource.emojisForCategory(selectedCategory);
-
-    final pageSize = 21;
-    final pages = chunk(emojis, pageSize);
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        print(constraints);
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SizedBox(
-              height: 200,
-              child: EmojiPageView(
-                pageController: pageController,
-                onEmojiPressed: widget.onEmojiPressed,
-                pages: pages,
-                pageSize: pageSize,
-              ),
-            ),
-            HorizontalScrollPositionIndicator(position: pageScrollPosition),
-            SizedBox(height: 1),
-            CategoryTabBar(
-              categories: widget.dataSource.categories,
-              selectedCategory: selectedCategory,
-              onTabPressed: (c) {
-                setState(() {
-                  selectedCategory = c;
-                  pageController.jumpToPage(0);
-                });
-              },
-            ),
-          ],
-        );
-      },
-    );
   }
 }
 
@@ -203,7 +178,7 @@ class HorizontalScrollPositionIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 5,
+      height: 2,
       color: Colors.black12,
       child: AnimatedBuilder(
         animation: position,
@@ -231,28 +206,40 @@ class HorizontalScrollPositionIndicator extends StatelessWidget {
 
 class EmojiPage extends StatelessWidget {
   final List<Emoji> emojis;
+  final int pageSize;
+  final double buttonSize;
   final void Function(Emoji emoji) onEmojiPressed;
 
   EmojiPage({
     @required this.emojis,
+    @required this.pageSize,
+    this.buttonSize = 55,
     this.onEmojiPressed,
   });
 
   @override
   Widget build(BuildContext context) {
+    final numEmptySlots = pageSize - emojis.length;
     return Container(
       color: const Color.fromRGBO(242, 242, 242, 1),
-      child: Wrap(
-        children: [
-          for (final e in emojis)
-            EmojiButton(
-              emoji: e,
-              size: 55,
-              onPressed: () {
-                onEmojiPressed?.call(e);
-              },
-            ),
-        ],
+      child: Center(
+        child: Wrap(
+          children: [
+            for (final e in emojis)
+              EmojiButton(
+                emoji: e,
+                size: buttonSize,
+                onPressed: () {
+                  onEmojiPressed?.call(e);
+                },
+              ),
+            for (int i = 0; i < numEmptySlots; i++)
+              SizedBox(
+                width: buttonSize,
+                height: buttonSize,
+              )
+          ],
+        ),
       ),
     );
   }
@@ -278,7 +265,7 @@ class EmojiButton extends StatelessWidget {
         onPressed: onPressed,
         child: Center(
           child: Text(
-            emoji.emoji,
+            emoji.unicode,
             style: TextStyle(fontSize: 24),
           ),
         ),
@@ -289,38 +276,51 @@ class EmojiButton extends StatelessWidget {
 
 class EmojiPageView extends StatelessWidget {
   const EmojiPageView({
-    @required this.pages,
-    @required this.pageSize,
+    @required this.emojis,
     @required this.pageController,
+    this.buttonSize = 55.0,
     this.onEmojiPressed,
   });
 
-  final List<List<Emoji>> pages;
-  final int pageSize;
+  final List<Emoji> emojis;
   final PageController pageController;
+  final double buttonSize;
   final void Function(Emoji emoji) onEmojiPressed;
 
   @override
   Widget build(Object context) {
-    return PageView.builder(
-      controller: pageController,
-      itemCount: pages.length,
-      itemBuilder: (context, position) {
-        final pageForPosition = pages[position];
-        return EmojiPage(
-          emojis: pageForPosition,
-          onEmojiPressed: onEmojiPressed,
-        );
-      },
-    );
+    return LayoutBuilder(builder: (context, constraints) {
+      final pageSize = _calculatePageSize(constraints);
+      final pages = chunk(emojis, pageSize);
+
+      return PageView.builder(
+        controller: pageController,
+        itemCount: pages.length,
+        itemBuilder: (context, position) {
+          final pageForPosition = pages[position];
+          return EmojiPage(
+            emojis: pageForPosition,
+            onEmojiPressed: onEmojiPressed,
+            pageSize: pageSize,
+            buttonSize: buttonSize,
+          );
+        },
+      );
+    });
+  }
+
+  int _calculatePageSize(BoxConstraints constraints) {
+    final maxRows = constraints.maxWidth ~/ buttonSize;
+    final maxCols = constraints.maxHeight ~/ buttonSize;
+    return maxRows * maxCols;
   }
 }
 
 class CategoryTabBar extends StatelessWidget {
-  final List<EmojiCategory> categories;
-  final EmojiCategory selectedCategory;
+  final List<Category> categories;
+  final Category selectedCategory;
 
-  final void Function(EmojiCategory category) onTabPressed;
+  final void Function(Category category) onTabPressed;
 
   CategoryTabBar({
     @required this.categories,
@@ -330,25 +330,31 @@ class CategoryTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        for (final c in categories)
-          CategoryIconButton(
-            icon: c.icon,
-            selected: c == selectedCategory,
-            size: 45,
-            onPressed: () {
-              onTabPressed?.call(c);
-            },
-          )
-      ],
+    return ConstrainedBox(
+      constraints: BoxConstraints(minHeight: 20, maxHeight: 45),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final c in categories)
+            Expanded(
+              flex: 1,
+              child: CategoryIconButton(
+                icon: c.icon,
+                selected: c == selectedCategory,
+                onPressed: () {
+                  onTabPressed?.call(c);
+                },
+              ),
+            )
+        ],
+      ),
     );
   }
 }
 
 class CategoryIconButton extends StatelessWidget {
   final IconData icon;
-  final double size;
 
   final VoidCallback onPressed;
 
@@ -361,7 +367,6 @@ class CategoryIconButton extends StatelessWidget {
 
   CategoryIconButton({
     @required this.icon,
-    @required this.size,
     this.onPressed,
     this.color = const Color.fromRGBO(211, 211, 211, 1),
     this.backgroundColor = const Color.fromRGBO(242, 242, 242, 1),
@@ -372,21 +377,15 @@ class CategoryIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: FlatButton(
-        autofocus: false,
-        clipBehavior: Clip.none,
-        onPressed: this.onPressed,
-        color: selected ? selectedBackgroundColor : backgroundColor,
-        child: Center(
-          child: Icon(
-            icon,
-            size: 22,
-            color: selected ? selectedColor : color,
-          ),
-        ),
+    return FlatButton(
+      autofocus: false,
+      clipBehavior: Clip.none,
+      onPressed: this.onPressed,
+      color: selected ? selectedBackgroundColor : backgroundColor,
+      child: Icon(
+        icon,
+        size: 22,
+        color: selected ? selectedColor : color,
       ),
     );
   }

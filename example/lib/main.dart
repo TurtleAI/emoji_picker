@@ -49,11 +49,14 @@ class MainPageState extends State<MainPage> {
           },
         ),
         SizedBox(height: 50),
-        EmojiPickerSheet(
-          dataSource: emojiDataSource,
-          onEmojiPressed: (emoji) {
-            print("PRESSED $emoji");
-          },
+        Container(
+          constraints: BoxConstraints.tight(Size.fromHeight(400)),
+          child: EmojiPickerSheet(
+            dataSource: emojiDataSource,
+            onEmojiPressed: (emoji) {
+              print("PRESSED $emoji");
+            },
+          ),
         ),
       ],
     );
