@@ -1,25 +1,11 @@
 library emoji_picker;
 
-import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'src/emoji_lists.dart' as emojiList;
+import 'package:flutter/material.dart';
+
+import 'emoji_data_source.dart';
 import 'src/horizontal_scroll_position_indicator.dart';
 import 'src/util.dart';
-
-class Emoji {
-  final String name;
-  final String unicode;
-
-  Emoji({
-    @required this.name,
-    @required this.unicode,
-  });
-
-  @override
-  String toString() {
-    return "$name, $unicode";
-  }
-}
 
 const DEFAULT_BACKGROUND_COLOR = Color.fromRGBO(242, 242, 242, 1);
 
@@ -101,69 +87,6 @@ class _EmojiPickerState extends State<EmojiPicker> {
         ],
       ),
     );
-  }
-}
-
-class Category {
-  final IconData icon;
-  final String name;
-  Category({this.name, this.icon});
-}
-
-abstract class EmojiDataSource {
-  List<Category> get categories;
-  List<Emoji> emojisForCategory(Category category);
-}
-
-class DefaultEmojiDataSource implements EmojiDataSource {
-  final _emojiCategories = <Category>[
-    // Category(name: 'Recent', icon: Icons.search),
-    Category(name: 'Faces', icon: Icons.tag_faces),
-    Category(name: 'Animals', icon: Icons.pets),
-    Category(name: 'Foods', icon: Icons.fastfood),
-    Category(name: 'Travel', icon: Icons.location_city),
-    Category(name: 'Activities', icon: Icons.directions_run),
-    Category(name: 'Objects', icon: Icons.lightbulb_outline),
-    Category(name: 'Symbols', icon: Icons.euro_symbol),
-    Category(name: 'Flags', icon: Icons.flag),
-  ];
-
-  @override
-  List<Category> get categories => _emojiCategories;
-
-  @override
-  List<Emoji> emojisForCategory(Category category) {
-    switch (category.name) {
-      case 'Recent':
-        return [];
-      case 'Faces':
-        return _toEmojis(emojiList.smileys);
-      case 'Animals':
-        return _toEmojis(emojiList.animals);
-      case 'Foods':
-        return _toEmojis(emojiList.foods);
-      case 'Travel':
-        return _toEmojis(emojiList.travel);
-      case 'Activities':
-        return _toEmojis(emojiList.activities);
-      case 'Objects':
-        return _toEmojis(emojiList.objects);
-      case 'Symbols':
-        return _toEmojis(emojiList.symbols);
-      case 'Flags':
-        return _toEmojis(emojiList.flags);
-      default:
-        return [];
-    }
-  }
-
-  List<Emoji> _toEmojis(Map<String, String> emojiMap) {
-    return emojiMap.entries
-        .map((e) => Emoji(
-              name: e.key,
-              unicode: e.value,
-            ))
-        .toList();
   }
 }
 
