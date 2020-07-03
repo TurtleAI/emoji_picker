@@ -21,14 +21,18 @@ class Emoji {
   }
 }
 
+const DEFAULT_BACKGROUND_COLOR = Color.fromRGBO(242, 242, 242, 1);
+
 class EmojiPicker extends StatefulWidget {
   final EmojiDataSource dataSource;
   final Category selectedCategory;
+  final Color backgroundColor;
 
   final void Function(Emoji emoji) onEmojiPressed;
 
   EmojiPicker({
     @required this.dataSource,
+    this.backgroundColor = DEFAULT_BACKGROUND_COLOR,
     this.selectedCategory,
     this.onEmojiPressed,
   });
@@ -68,31 +72,34 @@ class _EmojiPickerState extends State<EmojiPicker> {
   @override
   Widget build(BuildContext context) {
     final emojis = widget.dataSource.emojisForCategory(selectedCategory);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Expanded(
-          flex: 1,
-          child: EmojiPageView(
-            pageController: pageController,
-            onEmojiPressed: widget.onEmojiPressed,
-            emojis: emojis,
+    return Container(
+      color: widget.backgroundColor,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            flex: 1,
+            child: EmojiPageView(
+              pageController: pageController,
+              onEmojiPressed: widget.onEmojiPressed,
+              emojis: emojis,
+            ),
           ),
-        ),
-        HorizontalScrollPositionIndicator(position: pageScrollPosition),
-        SizedBox(height: 1),
-        CategoryTabBar(
-          categories: widget.dataSource.categories,
-          selectedCategory: selectedCategory,
-          onTabPressed: (c) {
-            setState(() {
-              selectedCategory = c;
-              pageController.jumpToPage(0);
-            });
-          },
-        ),
-      ],
+          HorizontalScrollPositionIndicator(position: pageScrollPosition),
+          CategoryTabBar(
+            categories: widget.dataSource.categories,
+            selectedCategory: selectedCategory,
+            backgroundColor: widget.backgroundColor,
+            onTabPressed: (c) {
+              setState(() {
+                selectedCategory = c;
+                pageController.jumpToPage(0);
+              });
+            },
+          ),
+        ],
+      ),
     );
   }
 }
@@ -177,7 +184,6 @@ class EmojiPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final numEmptySlots = pageSize - emojis.length;
     return Container(
-      color: const Color.fromRGBO(242, 242, 242, 1),
       child: Center(
         child: Wrap(
           children: [
@@ -286,11 +292,13 @@ class EmojiPageView extends StatelessWidget {
 class CategoryTabBar extends StatelessWidget {
   final List<Category> categories;
   final Category selectedCategory;
+  final Color backgroundColor;
 
   final void Function(Category category) onTabPressed;
 
   CategoryTabBar({
     @required this.categories,
+    this.backgroundColor = DEFAULT_BACKGROUND_COLOR,
     this.onTabPressed,
     this.selectedCategory,
   });
@@ -309,6 +317,7 @@ class CategoryTabBar extends StatelessWidget {
               child: CategoryIconButton(
                 icon: c.icon,
                 selected: c == selectedCategory,
+                backgroundColor: backgroundColor,
                 onPressed: () {
                   onTabPressed?.call(c);
                 },
@@ -336,7 +345,7 @@ class CategoryIconButton extends StatelessWidget {
     @required this.icon,
     this.onPressed,
     this.color = const Color.fromRGBO(211, 211, 211, 1),
-    this.backgroundColor = const Color.fromRGBO(242, 242, 242, 1),
+    this.backgroundColor = DEFAULT_BACKGROUND_COLOR,
     this.selected = false,
     this.selectedColor = const Color.fromRGBO(178, 178, 178, 1),
     this.selectedBackgroundColor = Colors.black12,
