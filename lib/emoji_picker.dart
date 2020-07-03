@@ -2,7 +2,8 @@ library emoji_picker;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'emoji_lists.dart' as emojiList;
+import 'src/emoji_lists.dart' as emojiList;
+import 'src/horizontal_scroll_position_indicator.dart';
 import 'src/util.dart';
 
 class Emoji {
@@ -20,24 +21,28 @@ class Emoji {
   }
 }
 
-class EmojiPickerSheet extends StatefulWidget {
+class EmojiPicker extends StatefulWidget {
   final EmojiDataSource dataSource;
+  final Category selectedCategory;
+
   final void Function(Emoji emoji) onEmojiPressed;
 
-  EmojiPickerSheet({
+  EmojiPicker({
     @required this.dataSource,
+    this.selectedCategory,
     this.onEmojiPressed,
   });
 
   @override
   State<StatefulWidget> createState() {
-    return _EmojiPickerSheetState();
+    return _EmojiPickerState();
   }
 }
 
-class _EmojiPickerSheetState extends State<EmojiPickerSheet> {
+class _EmojiPickerState extends State<EmojiPicker> {
   final pageController = PageController();
-  final pageScrollPosition = ValueNotifier<ScrollPosition>(ScrollPosition());
+  final pageScrollPosition =
+      ValueNotifier<PageScrollPosition>(PageScrollPosition());
 
   Category selectedCategory;
 
@@ -46,7 +51,8 @@ class _EmojiPickerSheetState extends State<EmojiPickerSheet> {
     super.initState();
 
     pageController.addListener(_onPageControllerScroll);
-    selectedCategory = widget.dataSource.categories[1];
+    selectedCategory =
+        widget.selectedCategory ?? widget.dataSource.categories[0];
   }
 
   @override
@@ -154,56 +160,6 @@ class DefaultEmojiDataSource implements EmojiDataSource {
   }
 }
 
-class ScrollPosition {
-  final double offset;
-  final double width;
-  const ScrollPosition({this.offset = 0, this.width = 0});
-}
-
-ScrollPosition scrollPositionForController(PageController controller) {
-  final position = controller.position;
-  final offset = controller.offset;
-  final totalWidth = position.maxScrollExtent - position.minScrollExtent;
-  return ScrollPosition(
-    offset: offset / totalWidth,
-    width: position.viewportDimension / totalWidth,
-  );
-}
-
-class HorizontalScrollPositionIndicator extends StatelessWidget {
-  final ValueNotifier<ScrollPosition> position;
-
-  HorizontalScrollPositionIndicator({this.position});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 2,
-      color: Colors.black12,
-      child: AnimatedBuilder(
-        animation: position,
-        builder: (context, _) {
-          final curPosition = this.position.value;
-          return Align(
-            alignment: FractionalOffset(curPosition.offset, 0),
-            child: FractionallySizedBox(
-              alignment: Alignment.centerLeft,
-              heightFactor: 1,
-              widthFactor: curPosition.width,
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.rectangle,
-                  color: Colors.blue,
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
 class EmojiPage extends StatelessWidget {
   final List<Emoji> emojis;
   final int pageSize;
@@ -289,6 +245,17 @@ class EmojiPageView extends StatelessWidget {
 
   @override
   Widget build(Object context) {
+    if (emojis.isEmpty) {
+      return Container(
+        child: Center(
+          child: Text(
+            'No items',
+            style: TextStyle(fontSize: 20, color: Colors.black26),
+          ),
+        ),
+      );
+    }
+
     return LayoutBuilder(builder: (context, constraints) {
       final pageSize = _calculatePageSize(constraints);
       final pages = chunk(emojis, pageSize);

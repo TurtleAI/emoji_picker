@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:emoji_picker/emoji_picker.dart';
-import 'package:emoji_picker/emoji_picker_legacy.dart';
 
 void main() => runApp(MainApp());
 
@@ -38,20 +37,9 @@ class MainPageState extends State<MainPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SizedBox(height: 20),
-        EmojiPicker(
-          rows: 3,
-          columns: 7,
-          buttonMode: ButtonMode.MATERIAL,
-          numRecommended: 10,
-          onEmojiSelected: (emoji, category) {
-            print(emoji);
-          },
-        ),
-        SizedBox(height: 50),
         Container(
-          constraints: BoxConstraints.tight(Size.fromHeight(400)),
-          child: EmojiPickerSheet(
+          constraints: BoxConstraints.tight(Size.fromHeight(250)),
+          child: EmojiPicker(
             dataSource: emojiDataSource,
             onEmojiPressed: (emoji) {
               print("PRESSED $emoji");
