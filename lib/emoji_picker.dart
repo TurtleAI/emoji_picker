@@ -31,8 +31,7 @@ class EmojiPicker extends StatefulWidget {
 
 class _EmojiPickerState extends State<EmojiPicker> {
   final pageController = PageController();
-  final pageScrollPosition =
-      ValueNotifier<PageScrollPosition>(PageScrollPosition());
+  final pageScrollOffset = ValueNotifier<double>(0);
 
   Category selectedCategory;
 
@@ -52,7 +51,7 @@ class _EmojiPickerState extends State<EmojiPicker> {
   }
 
   void _onPageControllerScroll() {
-    pageScrollPosition.value = scrollPositionForController(pageController);
+    pageScrollOffset.value = pageController.page;
   }
 
   @override
@@ -70,9 +69,9 @@ class _EmojiPickerState extends State<EmojiPicker> {
               pageController: pageController,
               onEmojiPressed: widget.onEmojiPressed,
               emojis: emojis,
+              pageScrollOffset: pageScrollOffset,
             ),
           ),
-          HorizontalScrollPositionIndicator(position: pageScrollPosition),
           CategoryTabBar(
             categories: widget.dataSource.categories,
             selectedCategory: selectedCategory,
@@ -165,12 +164,14 @@ class EmojiPageView extends StatelessWidget {
     @required this.pageController,
     this.buttonSize = 55.0,
     this.onEmojiPressed,
+    this.pageScrollOffset,
   });
 
   final List<Emoji> emojis;
   final PageController pageController;
   final double buttonSize;
   final void Function(Emoji emoji) onEmojiPressed;
+  final ValueNotifier<double> pageScrollOffset;
 
   @override
   Widget build(Object context) {
@@ -189,18 +190,30 @@ class EmojiPageView extends StatelessWidget {
       final pageSize = _calculatePageSize(constraints);
       final pages = chunk(emojis, pageSize);
 
-      return PageView.builder(
-        controller: pageController,
-        itemCount: pages.length,
-        itemBuilder: (context, position) {
-          final pageForPosition = pages[position];
-          return EmojiPage(
-            emojis: pageForPosition,
-            onEmojiPressed: onEmojiPressed,
-            pageSize: pageSize,
-            buttonSize: buttonSize,
-          );
-        },
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: PageView.builder(
+              controller: pageController,
+              itemCount: pages.length,
+              itemBuilder: (context, position) {
+                final pageForPosition = pages[position];
+                return EmojiPage(
+                  emojis: pageForPosition,
+                  onEmojiPressed: onEmojiPressed,
+                  pageSize: pageSize,
+                  buttonSize: buttonSize,
+                );
+              },
+            ),
+          ),
+          if (pageScrollOffset != null)
+            HorizontalScrollPositionIndicator(
+              page: pageScrollOffset,
+              pageCount: pages.length,
+            ),
+        ],
       );
     });
   }

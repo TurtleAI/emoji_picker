@@ -1,26 +1,14 @@
 import 'package:flutter/material.dart' show Colors;
 import 'package:flutter/widgets.dart';
 
-class PageScrollPosition {
-  final double offset;
-  final double width;
-  const PageScrollPosition({this.offset = 0, this.width = 0});
-}
-
-PageScrollPosition scrollPositionForController(PageController controller) {
-  final position = controller.position;
-  final offset = controller.offset;
-  final totalWidth = position.maxScrollExtent - position.minScrollExtent;
-  return PageScrollPosition(
-    offset: offset / totalWidth,
-    width: position.viewportDimension / totalWidth,
-  );
-}
-
 class HorizontalScrollPositionIndicator extends StatelessWidget {
-  final ValueNotifier<PageScrollPosition> position;
+  final int pageCount;
+  final ValueNotifier<double> page;
+  final double _pageWidth;
 
-  HorizontalScrollPositionIndicator({this.position});
+  HorizontalScrollPositionIndicator(
+      {@required this.pageCount, @required this.page})
+      : _pageWidth = 1 / pageCount;
 
   @override
   Widget build(BuildContext context) {
@@ -28,20 +16,18 @@ class HorizontalScrollPositionIndicator extends StatelessWidget {
       height: 2,
       color: Colors.black12,
       child: AnimatedBuilder(
-        animation: position,
+        animation: page,
         builder: (context, _) {
-          final curPosition = this.position.value;
-          return Align(
-            alignment: FractionalOffset(curPosition.offset, 0),
-            child: FractionallySizedBox(
-              alignment: Alignment.centerLeft,
-              heightFactor: 1,
-              widthFactor: curPosition.width,
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.rectangle,
-                  color: Colors.blue,
-                ),
+          final alignmentX = _alignmentXForIndicator(page.value, pageCount);
+
+          return FractionallySizedBox(
+            alignment: Alignment(alignmentX, -1),
+            heightFactor: 1,
+            widthFactor: _pageWidth,
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.rectangle,
+                color: Colors.blue,
               ),
             ),
           );
@@ -50,3 +36,6 @@ class HorizontalScrollPositionIndicator extends StatelessWidget {
     );
   }
 }
+
+double _alignmentXForIndicator(double pageValue, int pageCount) =>
+    -1 + (pageValue / (pageCount - 1)) * 2;
