@@ -1,27 +1,27 @@
 library emoji_picker;
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'emoji_data_source.dart';
 import 'src/horizontal_scroll_position_indicator.dart';
 import 'src/util.dart';
 
-const DEFAULT_BACKGROUND_COLOR = Color.fromRGBO(242, 242, 242, 1);
+const _kEmojiPickerDefaultBackgroundColor = Color.fromRGBO(242, 242, 242, 1);
+const _kDefaultButtonSize = Size(55, 55);
 
 class EmojiPicker extends StatefulWidget {
-  final EmojiDataSource dataSource;
-  final Category selectedCategory;
-  final Color backgroundColor;
-
-  final void Function(Emoji emoji) onEmojiPressed;
-
   EmojiPicker({
     @required this.dataSource,
-    this.backgroundColor = DEFAULT_BACKGROUND_COLOR,
+    this.backgroundColor = _kEmojiPickerDefaultBackgroundColor,
     this.selectedCategory,
     this.onEmojiPressed,
   });
+
+  final EmojiDataSource dataSource;
+  final Category selectedCategory;
+  final Color backgroundColor;
+  final Size buttonSize = _kDefaultButtonSize;
+  final void Function(Emoji emoji) onEmojiPressed;
 
   @override
   State<StatefulWidget> createState() {
@@ -64,12 +64,12 @@ class _EmojiPickerState extends State<EmojiPicker> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
-            flex: 1,
             child: EmojiPageView(
               pageController: pageController,
               onEmojiPressed: widget.onEmojiPressed,
               emojis: emojis,
               pageScrollOffset: pageScrollOffset,
+              buttonSize: widget.buttonSize,
             ),
           ),
           CategoryTabBar(
@@ -90,17 +90,17 @@ class _EmojiPickerState extends State<EmojiPicker> {
 }
 
 class EmojiPage extends StatelessWidget {
-  final List<Emoji> emojis;
-  final int pageSize;
-  final double buttonSize;
-  final void Function(Emoji emoji) onEmojiPressed;
-
   EmojiPage({
     @required this.emojis,
     @required this.pageSize,
-    this.buttonSize = 55,
+    this.buttonSize = _kDefaultButtonSize,
     this.onEmojiPressed,
   });
+
+  final List<Emoji> emojis;
+  final int pageSize;
+  final Size buttonSize;
+  final void Function(Emoji emoji) onEmojiPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -119,8 +119,8 @@ class EmojiPage extends StatelessWidget {
               ),
             for (int i = 0; i < numEmptySlots; i++)
               SizedBox(
-                width: buttonSize,
-                height: buttonSize,
+                width: buttonSize.width,
+                height: buttonSize.height,
               )
           ],
         ),
@@ -137,14 +137,14 @@ class EmojiButton extends StatelessWidget {
   });
 
   final Emoji emoji;
-  final double size;
+  final Size size;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: size,
-      height: size,
+      width: size.width,
+      height: size.width,
       child: FlatButton(
         onPressed: onPressed,
         child: Center(
@@ -162,14 +162,14 @@ class EmojiPageView extends StatelessWidget {
   const EmojiPageView({
     @required this.emojis,
     @required this.pageController,
-    this.buttonSize = 55.0,
+    this.buttonSize = _kDefaultButtonSize,
     this.onEmojiPressed,
     this.pageScrollOffset,
   });
 
   final List<Emoji> emojis;
   final PageController pageController;
-  final double buttonSize;
+  final Size buttonSize;
   final void Function(Emoji emoji) onEmojiPressed;
   final ValueNotifier<double> pageScrollOffset;
 
@@ -219,8 +219,8 @@ class EmojiPageView extends StatelessWidget {
   }
 
   int _calculatePageSize(BoxConstraints constraints) {
-    final maxRows = constraints.maxWidth ~/ buttonSize;
-    final maxCols = constraints.maxHeight ~/ buttonSize;
+    final maxRows = constraints.maxWidth ~/ buttonSize.width;
+    final maxCols = constraints.maxHeight ~/ buttonSize.height;
     return maxRows * maxCols;
   }
 }
@@ -234,7 +234,7 @@ class CategoryTabBar extends StatelessWidget {
 
   CategoryTabBar({
     @required this.categories,
-    this.backgroundColor = DEFAULT_BACKGROUND_COLOR,
+    this.backgroundColor = _kEmojiPickerDefaultBackgroundColor,
     this.onTabPressed,
     this.selectedCategory,
   });
@@ -242,7 +242,7 @@ class CategoryTabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ConstrainedBox(
-      constraints: BoxConstraints(minHeight: 20, maxHeight: 45),
+      constraints: BoxConstraints(maxHeight: 45),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -281,7 +281,7 @@ class CategoryIconButton extends StatelessWidget {
     @required this.icon,
     this.onPressed,
     this.color = const Color.fromRGBO(211, 211, 211, 1),
-    this.backgroundColor = DEFAULT_BACKGROUND_COLOR,
+    this.backgroundColor = _kEmojiPickerDefaultBackgroundColor,
     this.selected = false,
     this.selectedColor = const Color.fromRGBO(178, 178, 178, 1),
     this.selectedBackgroundColor = Colors.black12,
@@ -296,9 +296,17 @@ class CategoryIconButton extends StatelessWidget {
       color: selected ? selectedBackgroundColor : backgroundColor,
       child: Icon(
         icon,
-        size: 22,
         color: selected ? selectedColor : color,
       ),
     );
   }
+}
+
+extension WidgetDebug on Widget {
+  Widget color(Color color) => Container(color: color, child: this);
+  Widget get red => color(Colors.redAccent);
+  Widget get blue => color(Colors.blueAccent);
+  Widget get green => color(Colors.greenAccent);
+  Widget get yellow => color(Colors.yellowAccent);
+  Widget get orange => color(Colors.orangeAccent);
 }
