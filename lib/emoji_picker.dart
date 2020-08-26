@@ -151,6 +151,8 @@ class EmojiButton extends StatelessWidget {
           child: Text(
             emoji.unicode,
             style: TextStyle(fontSize: 24),
+            overflow: TextOverflow.clip,
+            maxLines: 1,
           ),
         ),
       ),
@@ -300,13 +302,4 @@ class CategoryIconButton extends StatelessWidget {
       ),
     );
   }
-}
-
-extension WidgetDebug on Widget {
-  Widget color(Color color) => Container(color: color, child: this);
-  Widget get red => color(Colors.redAccent);
-  Widget get blue => color(Colors.blueAccent);
-  Widget get green => color(Colors.greenAccent);
-  Widget get yellow => color(Colors.yellowAccent);
-  Widget get orange => color(Colors.orangeAccent);
 }
