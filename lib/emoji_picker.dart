@@ -164,7 +164,6 @@ class EmojiButton extends StatelessWidget {
       height: size.height,
       child: FlatButton(
         onPressed: onPressed,
-        color: _kEmojiPickerDefaultBackgroundColor,
         child: Text(
           emoji.unicode,
           textAlign: TextAlign.center,
