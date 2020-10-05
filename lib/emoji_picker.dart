@@ -92,38 +92,55 @@ class _EmojiPickerState extends State<EmojiPicker> {
 class EmojiPage extends StatelessWidget {
   EmojiPage({
     @required this.emojis,
-    @required this.pageSize,
+    @required this.numRows,
+    @required this.numCols,
     this.buttonSize = _kDefaultButtonSize,
     this.onEmojiPressed,
   });
 
   final List<Emoji> emojis;
-  final int pageSize;
+  final int numRows;
+  final int numCols;
   final Size buttonSize;
   final void Function(Emoji emoji) onEmojiPressed;
 
   @override
   Widget build(BuildContext context) {
-    final numEmptySlots = pageSize - emojis.length;
-    return Container(
-      child: Center(
-        child: Wrap(
-          children: [
-            for (final e in emojis)
-              EmojiButton(
-                emoji: e,
-                size: buttonSize,
-                onPressed: () {
-                  onEmojiPressed?.call(e);
-                },
-              ),
-            for (int i = 0; i < numEmptySlots; i++)
-              SizedBox(
-                width: buttonSize.width,
-                height: buttonSize.height,
-              )
-          ],
+    final numEmptySlots = (numRows * numCols) - emojis.length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var r = 0; r < numRows - 1; r++)
+          Expanded(
+            child: Row(
+              children: [
+                for (var c = 0; c < numCols; c++)
+                  _emoji(emojis[r * numCols + c]),
+              ],
+            ),
+          ),
+        Expanded(
+          child: Row(
+            children: [
+              for (var c = 0; c < numCols - numEmptySlots; c++)
+                _emoji(emojis[(numRows - 1) * numCols + c]),
+              Expanded(flex: numEmptySlots, child: SizedBox.shrink()),
+            ],
+          ),
         ),
+      ],
+    );
+  }
+
+  Widget _emoji(Emoji emoji) {
+    return Expanded(
+      child: EmojiButton(
+        emoji: emoji,
+        size: buttonSize,
+        onPressed: () {
+          onEmojiPressed?.call(emoji);
+        },
       ),
     );
   }
@@ -144,16 +161,14 @@ class EmojiButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: size.width,
-      height: size.width,
+      height: size.height,
       child: FlatButton(
         onPressed: onPressed,
-        child: Center(
-          child: Text(
-            emoji.unicode,
-            style: TextStyle(fontSize: 24),
-            overflow: TextOverflow.clip,
-            maxLines: 1,
-          ),
+        color: _kEmojiPickerDefaultBackgroundColor,
+        child: Text(
+          emoji.unicode,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 24),
         ),
       ),
     );
@@ -189,7 +204,10 @@ class EmojiPageView extends StatelessWidget {
     }
 
     return LayoutBuilder(builder: (context, constraints) {
-      final pageSize = _calculatePageSize(constraints);
+      final numCols = constraints.maxWidth ~/ buttonSize.width;
+      final numRows = constraints.maxHeight ~/ buttonSize.height;
+      final pageSize = numRows * numCols;
+
       final pages = chunk(emojis, pageSize);
 
       return Column(
@@ -204,7 +222,8 @@ class EmojiPageView extends StatelessWidget {
                 return EmojiPage(
                   emojis: pageForPosition,
                   onEmojiPressed: onEmojiPressed,
-                  pageSize: pageSize,
+                  numRows: numRows,
+                  numCols: numCols,
                   buttonSize: buttonSize,
                 );
               },
@@ -218,12 +237,6 @@ class EmojiPageView extends StatelessWidget {
         ],
       );
     });
-  }
-
-  int _calculatePageSize(BoxConstraints constraints) {
-    final maxRows = constraints.maxWidth ~/ buttonSize.width;
-    final maxCols = constraints.maxHeight ~/ buttonSize.height;
-    return maxRows * maxCols;
   }
 }
 
@@ -251,7 +264,6 @@ class CategoryTabBar extends StatelessWidget {
         children: [
           for (final c in categories)
             Expanded(
-              flex: 1,
               child: CategoryIconButton(
                 icon: c.icon,
                 selected: c == selectedCategory,
