@@ -106,7 +106,7 @@ class EmojiPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final numEmptySlots = (numRows * numCols) - emojis.length;
+    final numEmptySlots = emojis.length % numCols;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -125,7 +125,8 @@ class EmojiPage extends StatelessWidget {
             children: [
               for (var c = 0; c < numCols - numEmptySlots; c++)
                 _emoji(emojis[(numRows - 1) * numCols + c]),
-              Expanded(flex: numEmptySlots, child: SizedBox.shrink()),
+              if (numEmptySlots > 0)
+                Expanded(flex: numEmptySlots, child: SizedBox.shrink()),
             ],
           ),
         ),
@@ -305,7 +306,7 @@ class CategoryIconButton extends StatelessWidget {
     return FlatButton(
       autofocus: false,
       clipBehavior: Clip.none,
-      onPressed: this.onPressed,
+      onPressed: onPressed,
       color: selected ? selectedBackgroundColor : backgroundColor,
       child: Icon(
         icon,
